@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jeu de Balle Amélioré</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #282c34;
+            color: white;
+            font-family: Arial, sans-serif;
+            cursor: crosshair; /* Curseur de viseur */
+        }
+
+        .ball {
+            position: absolute;
+            pointer-events: auto; /* Permet l'interaction avec la balle */
+            transition: transform 0.3s, opacity 0.3s;
+            animation: pop-in 0.5s ease-out forwards;
+        }
+
+        .ball:hover {
+            transform: scale(1.2); /* Agrandissement sur survol */
+        }
+
+        @keyframes pop-in {
+            from { transform: scale(0); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        @keyframes pop-out {
+            from { transform: scale(1); opacity: 1; }
+            to { transform: scale(0); opacity: 0; }
+        }
+
+        @keyframes explosion {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.5); opacity: 0.8; }
+            100% { transform: scale(0); opacity: 0; }
+        }
+
+        .score-board, .level-board {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            font-size: 20px;
+        }
+
+        .level-board {
+            top: 40px;
+        }
+
+        /* Bandeau déroulant pour le menu de personnalisation */
+        .customization-panel {
+            position: absolute;
+            top: 0;
+            right: -250px; /* Commence hors de l'écran */
+            width: 250px;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 10px;
+            border-left: 2px solid white;
+            transition: right 0.3s ease;
+            color: white;
+        }
+
+        .customization-panel.open {
+            right: 0; /* Déroule le panneau */
+        }
+
+        .customization-toggle {
+            position: absolute;
+            top: 50%;
+            left: -30px;
+            background: #444;
+            width: 30px;
+            height: 60px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            color: white;
+            writing-mode: vertical-rl;
+            text-orientation: upright;
+            border-radius: 5px 0 0 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="score-board">Score : <span id="score">0</span></div>
+    <div class="level-board">Niveau : <span id="level">1</span></div>
+
+    <div class="customization-panel" id="customization-panel">
+        <div class="customization-toggle" id="customization-toggle">Menu</div>
+        <label for="ball-color">Couleur de la balle :</label>
+        <input type="color" id="ball-color" value="#ff0000"><br>
+        <label for="ball-size">Taille de la balle :</label>
+        <input type="range" id="ball-size" min="20" max="100" value="50">
+    </div>
+
+    <script>
+        let score = 0;
+        let level = 1;
+        let speed = 1500; // Temps initial pour créer une nouvelle balle
+        let ballsToNextLevel = 5; // Nombre de balles à cliquer pour passer au niveau suivant
+
+        const scoreDisplay = document.getElementById('score');
+        const levelDisplay = document.getElementById('level');
+        const ballColorInput = document.getElementById('ball-color');
+        const ballSizeInput = document.getElementById('ball-size');
+        const customizationPanel = document.getElementById('customization-panel');
+        const customizationToggle = document.getElementById('customization-toggle');
+
+        // Fonction pour ouvrir/fermer le bandeau de personnalisation
+        customizationToggle.onclick = function () {
+            customizationPanel.classList.toggle('open');
+        };
+
+        function createBall() {
+            const ball = document.createElement('div');
+            ball.className = 'ball';
+            ball.style.width = ball.style.height = ballSizeInput.value + 'px';
+            ball.style.backgroundColor = ballColorInput.value;
+            ball.style.top = Math.random() * (window.innerHeight - ballSizeInput.value) + 'px';
+            ball.style.left = Math.random() * (window.innerWidth - ballSizeInput.value) + 'px';
+
+            ball.onclick = function () {
+                score++;
+                scoreDisplay.textContent = score;
+
+                // Animation de l'explosion
+                ball.style.animation = 'explosion 0.5s ease-out forwards';
+                setTimeout(() => {
+                    ball.remove();
+                }, 500);
+
+                checkLevelUp();
+            };
+
+            document.body.appendChild(ball);
+
+            setTimeout(() => {
+                if (document.body.contains(ball)) {
+                    ball.style.animation = 'pop-out 0.5s ease-out forwards';
+                    setTimeout(() => ball.remove(), 500);
+                }
+            }, speed);
+        }
+
+        function checkLevelUp() {
+            if (score >= level * ballsToNextLevel) {
+                level++;
+                levelDisplay.textContent = level;
+                speed *= 0.9; // Accélération du jeu à chaque niveau
+            }
+        }
+
+        function startGame() {
+            setInterval(() => {
+                createBall();
+            }, speed);
+        }
+
+        startGame();
+    </script>
+</body>
+</html>
