@@ -92,12 +92,12 @@
   let cacti = [];
 
   document.body.addEventListener('keydown', function (e) {
-    if ([' ', 'ArrowUp'].includes(e.key) && gameRunning && !dino.jumping) {
+    if ([' ', 'ArrowUp', ''].includes(e.key) && gameRunning && !dino.jumping) {
       dino.velocity = JUMP;
       dino.jumping = true;
-    } else if (!gameRunning && !gameOver && [' ', 'ArrowUp'].includes(e.key)) {
+    } else if (!gameRunning && !gameOver && [' ', 'ArrowUp', ''].includes(e.key)) {
       startGame();
-    } else if (gameOver && [' ', 'ArrowUp'].includes(e.key)) {
+    } else if (gameOver && [' ', 'ArrowUp', ''].includes(e.key)) {
       resetGame();
     }
   });
