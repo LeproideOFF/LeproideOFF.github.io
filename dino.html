@@ -62,9 +62,16 @@
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
 
+    // Charger les images pour le dinosaure et les obstacles
+    const dinoImage = new Image();
+    dinoImage.src = 'https://www.bing.com/th?id=OIP.P82LrxQ7dsP8jQkgVzBxVQHaE6&w=176&h=185&c=8&rs=1&qlt=90&o=6&dpr=1.5&pid=3.1&rm=2';
+
+    const cactusImage = new Image();
+    cactusImage.src = 'https://images.pexels.com/photos/18790690/pexels-photo-18790690/free-photo-of-cactus-in-a-garden.jpeg?auto=compress&cs=tinysrgb&w=600';
+
     let dino = {
         x: 50,
-        y: canvas.height - 100,
+        y: canvas.height - 150,
         width: 50,
         height: 50,
         velocityY: 0,
@@ -76,7 +83,7 @@
     let obstacles = [];
     let gameRunning = false;
     let score = 0;
-    const obstacleFrequency = 2000; // Intervalle entre les obstacles (en millisecondes)
+    const obstacleFrequency = 2000; // Intervalle de base entre les obstacles
 
     document.body.addEventListener('keydown', function (e) {
         if (e.key === ' ' && gameRunning) {
@@ -103,7 +110,7 @@
 
     function startGame() {
         gameRunning = true;
-        dino.y = canvas.height - 100;
+        dino.y = canvas.height - 150;
         dino.velocityY = 0;
         score = 0;
         obstacles = [];
@@ -121,33 +128,32 @@
 
     function spawnObstacle() {
         if (!gameRunning) return;
+        
         const size = Math.random() * 20 + 30; // Taille aléatoire des obstacles
+        const gap = Math.random() * 100 + 200; // Espace aléatoire entre 200 et 300 pixels entre les obstacles
         const obstacle = {
-            x: canvas.width,
-            y: canvas.height - size,
+            x: canvas.width + gap,
+            y: canvas.height - size - 100,
             width: size,
             height: size
         };
         obstacles.push(obstacle);
-        setTimeout(spawnObstacle, obstacleFrequency - score * 10); // Crée les obstacles plus rapidement avec le score
+        setTimeout(spawnObstacle, obstacleFrequency - score * 15); // Crée les obstacles plus rapidement avec le score
     }
 
     function update() {
-        // Appliquer la gravité et gérer le saut
         dino.velocityY += dino.gravity;
         dino.y += dino.velocityY;
 
-        if (dino.y > canvas.height - 100) { // Limiter la position du dino au sol
-            dino.y = canvas.height - 100;
+        if (dino.y > canvas.height - 150) { // Limiter la position du dino au sol
+            dino.y = canvas.height - 150;
             dino.velocityY = 0;
             dino.isJumping = false;
         }
 
-        // Mettre à jour les obstacles
         obstacles.forEach((obstacle, index) => {
             obstacle.x -= 6;
 
-            // Vérifier la collision avec le dino
             if (
                 dino.x < obstacle.x + obstacle.width &&
                 dino.x + dino.width > obstacle.x &&
@@ -157,7 +163,6 @@
                 endGame();
             }
 
-            // Supprimer les obstacles qui sortent de l'écran
             if (obstacle.x + obstacle.width < 0) {
                 obstacles.splice(index, 1);
                 score++;
@@ -168,14 +173,12 @@
     function draw() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-        // Dessiner le dino
-        ctx.fillStyle = 'green';
-        ctx.fillRect(dino.x, dino.y, dino.width, dino.height);
+        // Dessiner le dino avec l'image
+        ctx.drawImage(dinoImage, dino.x, dino.y, dino.width, dino.height);
 
-        // Dessiner les obstacles
-        ctx.fillStyle = 'red';
+        // Dessiner les obstacles avec l'image du cactus
         obstacles.forEach(obstacle => {
-            ctx.fillRect(obstacle.x, obstacle.y, obstacle.width, obstacle.height);
+            ctx.drawImage(cactusImage, obstacle.x, obstacle.y, obstacle.width, obstacle.height);
         });
 
         // Afficher le score
