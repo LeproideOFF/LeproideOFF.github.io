@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pong - Deux Joueurs avec Score</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: black;
+            color: white;
+            font-family: Arial, sans-serif;
+            overflow: hidden; /* Empêcher le défilement */
+        }
+
+        canvas {
+            background-color: #333;
+            display: block;
+        }
+
+        .scoreboard {
+            margin-top: 20px;
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        .controls {
+            position: absolute;
+            bottom: 20px;
+            display: flex;
+            width: 100%;
+            justify-content: space-between;
+            padding: 0 20px;
+        }
+
+        .controls .left, .controls .right {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .button {
+            background-color: #555;
+            color: white;
+            padding: 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 18px;
+        }
+
+        .button:active {
+            background-color: #777;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="pongCanvas" width="800" height="600"></canvas>
+    <div class="scoreboard">
+        <div>Joueur 1: <span id="scorePlayer1">0</span></div>
+        <div>Joueur 2: <span id="scorePlayer2">0</span></div>
+    </div>
+    <div class="controls">
+        <div class="left">
+            <button class="button" id="moveUpPlayer1">Monter</button>
+            <button class="button" id="moveDownPlayer1">Descendre</button>
+        </div>
+        <div class="right">
+            <button class="button" id="moveUpPlayer2">Monter</button>
+            <button class="button" id="moveDownPlayer2">Descendre</button>
+        </div>
+    </div>
+    <script>
+        const canvas = document.getElementById("pongCanvas");
+        const context = canvas.getContext("2d");
+
+        let paddleHeight = 100, paddleWidth = 10, ballRadius = 10;
+        let player1Y = (canvas.height - paddleHeight) / 2;
+        let player2Y = (canvas.height - paddleHeight) / 2;
+        let playerSpeed = 6;
+        let ballX = canvas.width / 2, ballY = canvas.height / 2;
+        let ballSpeedX = 5, ballSpeedY = 4;
+        let scorePlayer1 = 0, scorePlayer2 = 0;
+
+        function updateScoreboard() {
+            document.getElementById("scorePlayer1").textContent = scorePlayer1;
+            document.getElementById("scorePlayer2").textContent = scorePlayer2;
+        }
+
+        function resetBall() {
+            ballX = canvas.width / 2;
+            ballY = canvas.height / 2;
+            ballSpeedX = -ballSpeedX;
+            ballSpeedY = 4;
+        }
+
+        // Variables pour les boutons tactiles
+        let isMovingUpPlayer1 = false;
+        let isMovingDownPlayer1 = false;
+        let isMovingUpPlayer2 = false;
+        let isMovingDownPlayer2 = false;
+
+        // Ajouter des événements tactiles pour les boutons du joueur 1
+        document.getElementById("moveUpPlayer1").addEventListener("mousedown", () => { isMovingUpPlayer1 = true; });
+        document.getElementById("moveUpPlayer1").addEventListener("mouseup", () => { isMovingUpPlayer1 = false; });
+        document.getElementById("moveUpPlayer1").addEventListener("touchstart", () => { isMovingUpPlayer1 = true; });
+        document.getElementById("moveUpPlayer1").addEventListener("touchend", () => { isMovingUpPlayer1 = false; });
+
+        document.getElementById("moveDownPlayer1").addEventListener("mousedown", () => { isMovingDownPlayer1 = true; });
+        document.getElementById("moveDownPlayer1").addEventListener("mouseup", () => { isMovingDownPlayer1 = false; });
+        document.getElementById("moveDownPlayer1").addEventListener("touchstart", () => { isMovingDownPlayer1 = true; });
+        document.getElementById("moveDownPlayer1").addEventListener("touchend", () => { isMovingDownPlayer1 = false; });
+
+        // Ajouter des événements tactiles pour les boutons du joueur 2
+        document.getElementById("moveUpPlayer2").addEventListener("mousedown", () => { isMovingUpPlayer2 = true; });
+        document.getElementById("moveUpPlayer2").addEventListener("mouseup", () => { isMovingUpPlayer2 = false; });
+        document.getElementById("moveUpPlayer2").addEventListener("touchstart", () => { isMovingUpPlayer2 = true; });
+        document.getElementById("moveUpPlayer2").addEventListener("touchend", () => { isMovingUpPlayer2 = false; });
+
+        document.getElementById("moveDownPlayer2").addEventListener("mousedown", () => { isMovingDownPlayer2 = true; });
+        document.getElementById("moveDownPlayer2").addEventListener("mouseup", () => { isMovingDownPlayer2 = false; });
+        document.getElementById("moveDownPlayer2").addEventListener("touchstart", () => { isMovingDownPlayer2 = true; });
+        document.getElementById("moveDownPlayer2").addEventListener("touchend", () => { isMovingDownPlayer2 = false; });
+
+        function drawPaddle(x, y) {
+            context.fillStyle = "white";
+            context.fillRect(x, y, paddleWidth, paddleHeight);
+        }
+
+        function drawBall(x, y) {
+            context.beginPath();
+            context.arc(x, y, ballRadius, 0, Math.PI * 2);
+            context.fillStyle = "white";
+            context.fill();
+            context.closePath();
+        }
+
+        function updateGame() {
+            ballX += ballSpeedX;
+            ballY += ballSpeedY;
+
+            // Contrôle de la collision avec les murs haut et bas
+            if (ballY + ballRadius > canvas.height || ballY - ballRadius < 0) {
+                ballSpeedY = -ballSpeedY;
+            }
+
+            // Collision avec la raquette du joueur 1
+            if (ballX - ballRadius < paddleWidth && ballY > player1Y && ballY < player1Y + paddleHeight) {
+                ballSpeedX = -ballSpeedX;
+            }
+
+            // Collision avec la raquette du joueur 2
+            if (ballX + ballRadius > canvas.width - paddleWidth && ballY > player2Y && ballY < player2Y + paddleHeight) {
+                ballSpeedX = -ballSpeedX;
+            }
+
+            // Vérification des scores
+            if (ballX - ballRadius < 0) {
+                scorePlayer2++;
+                updateScoreboard();
+                resetBall();
+            }
+
+            if (ballX + ballRadius > canvas.width) {
+                scorePlayer1++;
+                updateScoreboard();
+                resetBall();
+            }
+
+            // Mouvement du joueur 1
+            if ((keys["a"] || isMovingUpPlayer1) && player1Y > 0) {
+                player1Y -= playerSpeed;
+            }
+            if ((keys["q"] || isMovingDownPlayer1) && player1Y < canvas.height - paddleHeight) {
+                player1Y += playerSpeed;
+            }
+
+            // Mouvement du joueur 2
+            if ((keys["ArrowUp"] || isMovingUpPlayer2) && player2Y > 0) {
+                player2Y -= playerSpeed;
+            }
+            if ((keys["ArrowDown"] || isMovingDownPlayer2) && player2Y < canvas.height - paddleHeight) {
+                player2Y += playerSpeed;
+            }
+        }
+
+        function draw() {
+            context.clearRect(0, 0, canvas.width, canvas.height);
+            drawPaddle(0, player1Y);
+            drawPaddle(canvas.width - paddleWidth, player2Y);
+            drawBall(ballX, ballY);
+        }
+
+        function gameLoop() {
+            updateGame();
+            draw();
+            requestAnimationFrame(gameLoop);
+        }
+
+        let keys = {};
+        window.addEventListener("keydown", (event) => {
+            keys[event.key] = true;
+            event.preventDefault(); // Empêche le comportement par défaut (défilement)
+        });
+        window.addEventListener("keyup", (event) => { keys[event.key] = false; });
+
+        gameLoop();
+    </script>
+</body>
+</html>
