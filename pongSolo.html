@@ -4,12 +4,13 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pong avec IA</title>
+    <title>Pong Solo - Mode IA avec Score</title>
     <style>
         body, html {
             margin: 0;
             padding: 0;
             display: flex;
+            flex-direction: column;
             justify-content: center;
             align-items: center;
             height: 100vh;
@@ -22,21 +23,91 @@
             background-color: #333;
             display: block;
         }
+
+        .controls, .scoreboard {
+            margin-top: 20px;
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+        }
+
+        .controls {
+            position: absolute;
+            left: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            flex-direction: column;
+        }
+
+        .button {
+            background-color: #555;
+            color: white;
+            padding: 15px;
+            margin: 5px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 18px;
+        }
+
+        .button:active {
+            background-color: #777;
+        }
+
+        .score {
+            font-size: 24px;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
     <canvas id="pongCanvas" width="800" height="600"></canvas>
+    <div class="scoreboard">
+        <div>Joueur: <span id="playerScore">0</span></div>
+        <div>IA: <span id="aiScore">0</span></div>
+    </div>
+    <div class="controls">
+        <button class="button" id="moveUp">Monter</button>
+        <button class="button" id="moveDown">Descendre</button>
+    </div>
     <script>
         const canvas = document.getElementById("pongCanvas");
         const context = canvas.getContext("2d");
 
         let paddleHeight = 100, paddleWidth = 10, ballRadius = 10;
         let player1Y = (canvas.height - paddleHeight) / 2;
-        let aiY = (canvas.height - paddleHeight) / 2;
-        let playerSpeed = 8;
-        let aiSpeed = 5;
+        let player2Y = (canvas.height - paddleHeight) / 2;
+        let playerSpeed = 6;
         let ballX = canvas.width / 2, ballY = canvas.height / 2;
         let ballSpeedX = 5, ballSpeedY = 4;
+        let playerScore = 0, aiScore = 0;
+
+        function updateScoreboard() {
+            document.getElementById("playerScore").textContent = playerScore;
+            document.getElementById("aiScore").textContent = aiScore;
+        }
+
+        function resetBall() {
+            ballX = canvas.width / 2;
+            ballY = canvas.height / 2;
+            ballSpeedX = -ballSpeedX;
+            ballSpeedY = 4;
+        }
+
+        // Variables pour les boutons tactiles
+        let isMovingUp = false;
+        let isMovingDown = false;
+
+        // Ajouter des événements tactiles pour les boutons
+        document.getElementById("moveUp").addEventListener("mousedown", () => { isMovingUp = true; });
+        document.getElementById("moveUp").addEventListener("mouseup", () => { isMovingUp = false; });
+        document.getElementById("moveUp").addEventListener("touchstart", () => { isMovingUp = true; });
+        document.getElementById("moveUp").addEventListener("touchend", () => { isMovingUp = false; });
+
+        document.getElementById("moveDown").addEventListener("mousedown", () => { isMovingDown = true; });
+        document.getElementById("moveDown").addEventListener("mouseup", () => { isMovingDown = false; });
+        document.getElementById("moveDown").addEventListener("touchstart", () => { isMovingDown = true; });
+        document.getElementById("moveDown").addEventListener("touchend", () => { isMovingDown = false; });
 
         function drawPaddle(x, y) {
             context.fillStyle = "white";
@@ -55,44 +126,62 @@
             ballX += ballSpeedX;
             ballY += ballSpeedY;
 
+            // Contrôle de la collision avec les murs haut et bas
             if (ballY + ballRadius > canvas.height || ballY - ballRadius < 0) {
                 ballSpeedY = -ballSpeedY;
             }
 
+            // Collision avec la raquette du joueur
             if (ballX - ballRadius < paddleWidth && ballY > player1Y && ballY < player1Y + paddleHeight) {
                 ballSpeedX = -ballSpeedX;
             }
 
-            if (ballX + ballRadius > canvas.width - paddleWidth && ballY > aiY && ballY < aiY + paddleHeight) {
+            // Collision avec la raquette de l'IA
+            if (ballX + ballRadius > canvas.width - paddleWidth && ballY > player2Y && ballY < player2Y + paddleHeight) {
                 ballSpeedX = -ballSpeedX;
             }
 
-            if (ballX - ballRadius < 0 || ballX + ballRadius > canvas.width) {
-                ballX = canvas.width / 2;
-                ballY = canvas.height / 2;
-                ballSpeedX = -ballSpeedX;
-                ballSpeedY = 4;
+            // Vérification des scores
+            if (ballX - ballRadius < 0) {
+                aiScore++;
+                updateScoreboard();
+                resetBall();
             }
 
-            if (keys['w'] && player1Y > 0) {
+            if (ballX + ballRadius > canvas.width) {
+                playerScore++;
+                updateScoreboard();
+                resetBall();
+            }
+
+            // Mouvement de l'IA (suivre la balle)
+            if (ballY > player2Y + paddleHeight / 2) {
+                player2Y += playerSpeed;
+            } else if (ballY < player2Y + paddleHeight / 2) {
+                player2Y -= playerSpeed;
+            }
+
+            // Mouvement du joueur avec touches fléchées
+            if (keys["ArrowUp"] && player1Y > 0) {
                 player1Y -= playerSpeed;
             }
-            if (keys['s'] && player1Y < canvas.height - paddleHeight) {
+            if (keys["ArrowDown"] && player1Y < canvas.height - paddleHeight) {
                 player1Y += playerSpeed;
             }
 
-            // Logique de l'IA pour suivre la balle
-            if (aiY + paddleHeight / 2 < ballY) {
-                aiY += aiSpeed;
-            } else if (aiY + paddleHeight / 2 > ballY) {
-                aiY -= aiSpeed;
+            // Mouvement du joueur avec boutons tactiles
+            if (isMovingUp && player1Y > 0) {
+                player1Y -= playerSpeed;
+            }
+            if (isMovingDown && player1Y < canvas.height - paddleHeight) {
+                player1Y += playerSpeed;
             }
         }
 
         function draw() {
             context.clearRect(0, 0, canvas.width, canvas.height);
             drawPaddle(0, player1Y);
-            drawPaddle(canvas.width - paddleWidth, aiY);
+            drawPaddle(canvas.width - paddleWidth, player2Y);
             drawBall(ballX, ballY);
         }
 
