@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pong avec IA</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: black;
+            color: white;
+            font-family: Arial, sans-serif;
+        }
+
+        canvas {
+            background-color: #333;
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="pongCanvas" width="800" height="600"></canvas>
+    <script>
+        const canvas = document.getElementById("pongCanvas");
+        const context = canvas.getContext("2d");
+
+        let paddleHeight = 100, paddleWidth = 10, ballRadius = 10;
+        let player1Y = (canvas.height - paddleHeight) / 2;
+        let aiY = (canvas.height - paddleHeight) / 2;
+        let playerSpeed = 8;
+        let aiSpeed = 5;
+        let ballX = canvas.width / 2, ballY = canvas.height / 2;
+        let ballSpeedX = 5, ballSpeedY = 4;
+
+        function drawPaddle(x, y) {
+            context.fillStyle = "white";
+            context.fillRect(x, y, paddleWidth, paddleHeight);
+        }
+
+        function drawBall(x, y) {
+            context.beginPath();
+            context.arc(x, y, ballRadius, 0, Math.PI * 2);
+            context.fillStyle = "white";
+            context.fill();
+            context.closePath();
+        }
+
+        function updateGame() {
+            ballX += ballSpeedX;
+            ballY += ballSpeedY;
+
+            if (ballY + ballRadius > canvas.height || ballY - ballRadius < 0) {
+                ballSpeedY = -ballSpeedY;
+            }
+
+            if (ballX - ballRadius < paddleWidth && ballY > player1Y && ballY < player1Y + paddleHeight) {
+                ballSpeedX = -ballSpeedX;
+            }
+
+            if (ballX + ballRadius > canvas.width - paddleWidth && ballY > aiY && ballY < aiY + paddleHeight) {
+                ballSpeedX = -ballSpeedX;
+            }
+
+            if (ballX - ballRadius < 0 || ballX + ballRadius > canvas.width) {
+                ballX = canvas.width / 2;
+                ballY = canvas.height / 2;
+                ballSpeedX = -ballSpeedX;
+                ballSpeedY = 4;
+            }
+
+            if (keys['w'] && player1Y > 0) {
+                player1Y -= playerSpeed;
+            }
+            if (keys['s'] && player1Y < canvas.height - paddleHeight) {
+                player1Y += playerSpeed;
+            }
+
+            // Logique de l'IA pour suivre la balle
+            if (aiY + paddleHeight / 2 < ballY) {
+                aiY += aiSpeed;
+            } else if (aiY + paddleHeight / 2 > ballY) {
+                aiY -= aiSpeed;
+            }
+        }
+
+        function draw() {
+            context.clearRect(0, 0, canvas.width, canvas.height);
+            drawPaddle(0, player1Y);
+            drawPaddle(canvas.width - paddleWidth, aiY);
+            drawBall(ballX, ballY);
+        }
+
+        function gameLoop() {
+            updateGame();
+            draw();
+            requestAnimationFrame(gameLoop);
+        }
+
+        let keys = {};
+        window.addEventListener("keydown", (event) => { keys[event.key] = true; });
+        window.addEventListener("keyup", (event) => { keys[event.key] = false; });
+
+        gameLoop();
+    </script>
+</body>
+</html>
